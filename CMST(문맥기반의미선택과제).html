@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Context-based Meaning Selection Task</title>
+  <style>
+    body {
+      font-family: "Noto Sans KR", "Segoe UI", sans-serif;
+      background-color: #f1f3f5;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    #experiment {
+      background-color: #ffffff;
+      width: 840px;
+      padding: 50px 40px;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    h2 {
+      font-size: 28px;
+      margin-bottom: 20px;
+      color: #333;
+    }
+    p {
+      font-size: 18px;
+      line-height: 1.7;
+      color: #444;
+    }
+    #sentence {
+      font-size: 26px;
+      font-weight: 400;
+      margin: 40px 0 30px;
+      color: #222;
+    }
+    #options {
+      font-size: 44px;
+      font-weight: 400;
+      margin: 30px 0;
+      display: none;
+      color: #1a1a1a;
+    }
+    #feedback {
+      font-size: 22px;
+      font-weight: bold;
+      height: 32px;
+      margin-top: 20px;
+    }
+    #progress {
+      font-size: 16px;
+      color: #888;
+      margin-bottom: 12px;
+    }
+    input[type="text"] {
+      font-size: 18px;
+      padding: 10px 16px;
+      width: 300px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-top: 10px;
+    }
+    button {
+      font-size: 18px;
+      padding: 10px 20px;
+      margin-top: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #4a90e2;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    button:hover {
+      background-color: #3b78c2;
+    }
+    @media (max-width: 600px) {
+      #experiment {
+        width: 90%;
+        padding: 30px 20px;
+      }
+      #sentence {
+        font-size: 22px;
+      }
+      #options {
+        font-size: 32px;
+      }
+      input[type="text"] {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+<div id="experiment">
+  <div id="progress" style="display:none;"></div>
+  <div id="inputName">
+    <h2>이름을 입력하세요</h2>
+    <input type="text" id="participantName">
+    <button id="startBtn">Start</button>
+    <p>
+      <strong><u>※ 반드시 실명을 입력해주세요.</strong></u>
+    </p>
+  </div>
+  <div id="instructions" style="display:none;">
+    <p>
+      본 실험은 <strong>문맥 기반 의미 선택 과제(Context-based Meaning Selection Task)</strong>입니다.<br><br> 
+
+      📝 진행 방법<br><br>  
+      1. 실험은 영어로 진행됩니다.<br> 
+      2. 문장 속 <strong><u>밑줄 친 단어</strong></u>가 문맥상 어떤 의미로 쓰였는지 판단해 주세요.<br>
+      3. 다 읽은 후, <strong><u>스페이스바 또는 엔터 키</strong></u>를 누르면 <strong><u>두 개의 단어 선택지</strong></u>가 나타납니다.<br>
+      4. 문맥에 더 적절한 단어를 선택해 주세요.<br><br> 
+
+      ⌨ 판단 방법<br><br> 
+      1. 왼쪽 단어가 더 적절하면: <strong>←</strong> 키를 누르세요.<br>
+      2. 오른쪽 단어가 더 적절하면: <strong>→</strong> 키를 누르세요.<br><br><br>
+
+      가능한 한 빠르고 정확하게 판단해 주세요.<br><br>
+
+      🧪 지금부터 연습 시행을 시작하겠습니다. <strong>스페이스바 또는 엔터</strong>를 누르세요. 
+    </p>
+  </div>
+  <div id="transition" style="display:none;">
+    <p>
+      연습 시행이 끝났습니다.<br>
+      이제부터 본 시행이 시작됩니다. 피드백은 제공되지 않습니다.<br><br>
+      <strong>스페이스바 또는 엔터</strong>를 눌러 본 시행을 시작하세요.
+    </p>
+  </div>
+  <div id="sentence" style="display:none;"></div>
+  <div id="options" style="display:none;"></div>
+  <div id="feedback"></div>
+  <button id="downloadBtn" style="display:none;" onclick="downloadCSV()">결과 다운로드</button>
+</div>
+
+<script>
+const practiceTrials = [
+  { word: "dog", biasMeaning: "동물", sentence: "The <u>dog</u> barked loudly in the yard.", left: "cat", right: "car", correct: "cat" },
+  { word: "sun", biasMeaning: "해", sentence: "The <u>sun</u> rose above the mountains.", left: "moon", right: "cloud", correct: "moon" },
+  { word: "apple", biasMeaning: "과일", sentence: "She ate a juicy red <u>apple</u>.", left: "banana", right: "stone", correct: "banana" }
+];
+
+const mainTrials = [
+  { word: "bat", biasMeaning: "박쥐", sentence: "We saw a <u>bat</u> flying in the dark cave at night.", left: "vampire", right: "glove", correct: "vampire" },
+  { word: "bat", biasMeaning: "방망이", sentence: "He swung the <u>bat</u> to hit the ball.", left: "vampire", right: "glove", correct: "glove" },
+  { word: "bugs", biasMeaning: "벌레", sentence: "The garden was full of little <u>bugs</u> crawling around.", left: "listen", right: "insect", correct: "insect" },
+  { word: "bugs", biasMeaning: "도청장치", sentence: "A North Korean spy was searching for concealed <u>bugs</u> in the room.", left: "listen", right: "insect", correct: "listen" },
+  { word: "palm", biasMeaning: "손바닥", sentence: "She felt something strange on her <u>palm</u>.", left: "thumb", right: "coconut", correct: "thumb" },
+  { word: "palm", biasMeaning: "야자수", sentence: "We rested in the shade of a tall <u>palm</u> tree in the warm wind.", left: "thumb", right: "coconut", correct: "coconut" },
+  { word: "spring", biasMeaning: "봄", sentence: "The flowers started blooming in the <u>spring</u>.", left: "butterfly", right: "silver", correct: "butterfly" },
+  { word: "spring", biasMeaning: "용수철", sentence: "The <u>spring</u> expanded when the weight was removed.", left: "butterfly", right: "silver", correct: "silver" },
+  { word: "figure", biasMeaning: "인물", sentence: "She saw a dark <u>figure</u> standing by the window.", left: "silhouette", right: "statistics", correct: "silhouette" },
+  { word: "figure", biasMeaning: "숫자", sentence: "The company had yearly sales <u>figures</u> of half a million units.", left: "silhouette", right: "statistics", correct: "statistics" },
+  { word: "board", biasMeaning: "칠판", sentence: "The teacher wrote the answer on the <u>board</u>.", left: "chalk", right: "chairman", correct: "chalk" },
+  { word: "board", biasMeaning: "이사회", sentence: "The <u>board</u> of directors meets every month.", left: "chalk", right: "chairman", correct: "chairman" },
+  { word: "pupil", biasMeaning: "눈동자", sentence: "Her <u>pupil</u> dilated in the dark room.", left: "glasses", right: "homework", correct: "glasses" },
+  { word: "pupil", biasMeaning: "학생", sentence: "The teacher helped the <u>pupil</u> with the lesson.", left: "glasses", right: "homework", correct: "homework" },
+  { word: "bark", biasMeaning: "개 짖는 소리", sentence: "I woke up because of the dog’s <u>bark</u>.", left: "leash", right: "axe", correct: "leash" },
+  { word: "bark", biasMeaning: "나무껍질", sentence: "The tree had rough <u>bark</u> on its outer layer.", left: "leash", right: "axe", correct: "axe" },
+  { word: "race", biasMeaning: "인종", sentence: "People of every <u>race</u> should be treated equally.", left: "bias", right: "speed", correct: "bias" },
+  { word: "race", biasMeaning: "경주", sentence: "She won the <u>race</u> and got a gold medal.", left: "bias", right: "speed", correct: "speed" },
+  { word: "date", biasMeaning: "날짜", sentence: "We need to choose a <u>date</u> for the presentation.", left: "calender", right: "boyfriend", correct: "calender" },
+  { word: "date", biasMeaning: "데이트", sentence: "He asked me out on a <u>date</u> for Saturday.", left: "calender", right: "boyfriend", correct: "boyfriend" }
+];
+
+const realTrials = [
+  mainTrials[14], mainTrials[18], mainTrials[9], mainTrials[16], mainTrials[2],
+  mainTrials[4], mainTrials[15], mainTrials[10], mainTrials[1], mainTrials[5],
+  mainTrials[6], mainTrials[3], mainTrials[19], mainTrials[12], mainTrials[17],
+  mainTrials[8], mainTrials[0], mainTrials[11], mainTrials[13], mainTrials[7]
+];
+
+const allTrials = [...practiceTrials, ...realTrials];
+
+let currentIndex = 0;
+let participant = "";
+let results = [];
+let readingStartTime = 0;
+let decisionStartTime = 0;
+
+document.getElementById("startBtn").addEventListener("click", handleStart);
+document.getElementById("participantName").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") handleStart();
+});
+
+function handleStart() {
+  const name = document.getElementById("participantName").value.trim();
+  if (!name) {
+    alert("이름을 입력하세요.");
+    return;
+  }
+  participant = name;
+  document.getElementById("inputName").style.display = "none";
+  document.getElementById("instructions").style.display = "block";
+  setTimeout(() => document.addEventListener("keydown", handleSpaceStart), 300);
+}
+
+function handleSpaceStart(e) {
+  if (e.code === "Space" || e.code === "Enter") {
+    document.removeEventListener("keydown", handleSpaceStart);
+    document.getElementById("instructions").style.display = "none";
+    nextTrial();
+  }
+}
+
+function nextTrial() {
+  if (currentIndex >= allTrials.length) return endExperiment();
+
+  const isPractice = currentIndex < practiceTrials.length;
+  document.getElementById("progress").style.display = isPractice ? "none" : "block";
+  if (!isPractice) {
+    document.getElementById("progress").textContent = `진행도: ${currentIndex - practiceTrials.length + 1}/${realTrials.length}`;
+  }
+
+  document.getElementById("feedback").textContent = "";
+  const trial = allTrials[currentIndex];
+  document.getElementById("sentence").innerHTML = trial.sentence;
+  document.getElementById("sentence").style.display = "block";
+  document.getElementById("options").style.display = "none";
+
+  readingStartTime = performance.now();
+
+  setTimeout(() => document.addEventListener("keydown", handleContinue), 100);
+}
+
+function handleContinue(e) {
+  if (e.code !== "Space" && e.code !== "Enter") return;
+  document.removeEventListener("keydown", handleContinue);
+
+  const trial = allTrials[currentIndex];
+  const readingTime = (performance.now() - readingStartTime) / 1000;
+
+  const isLeftCorrect = Math.random() < 0.5;
+  const left = isLeftCorrect ? trial.correct : (trial.left === trial.correct ? trial.right : trial.left);
+  const right = isLeftCorrect ? (trial.left === trial.correct ? trial.right : trial.left) : trial.correct;
+
+  document.getElementById("options").textContent = `${left} vs ${right}`;
+  document.getElementById("sentence").style.display = "none";
+  document.getElementById("options").style.display = "block";
+
+  decisionStartTime = performance.now();
+
+  document.addEventListener("keydown", function handler(e) {
+    if (e.code !== "ArrowLeft" && e.code !== "ArrowRight") return;
+    document.removeEventListener("keydown", handler);
+
+    const chosen = e.code === "ArrowLeft" ? left : right;
+    const correct = chosen === trial.correct;
+    const RT = (performance.now() - decisionStartTime) / 1000;
+
+    results.push({
+      word: trial.word,
+      biasMeaning: trial.biasMeaning,
+      sentence: trial.sentence.replace(/<[^>]*>?/gm, ''),
+      left_word: left,
+      right_word: right,
+      correct_word: trial.correct,
+      chosen_word: chosen,
+      correct: correct,
+      readingTime: readingTime,
+      RT: RT,
+      phase: currentIndex < practiceTrials.length ? "practice" : "main"
+    });
+
+    const feedback = document.getElementById("feedback");
+    if (currentIndex < practiceTrials.length) {
+      feedback.textContent = correct ? "정답!" : "오답!";
+      feedback.style.color = correct ? "green" : "red";
+    } else {
+      feedback.textContent = "";
+    }
+
+    currentIndex++;
+
+    if (currentIndex === practiceTrials.length) {
+      setTimeout(() => {
+        document.getElementById("options").style.display = "none";
+        document.getElementById("feedback").textContent = "";
+        document.getElementById("transition").style.display = "block";
+        document.addEventListener("keydown", function waitMainStart(ev) {
+          if (ev.code === "Space" || ev.code === "Enter") {
+            document.removeEventListener("keydown", waitMainStart);
+            document.getElementById("transition").style.display = "none";
+            nextTrial();
+          }
+        });
+      }, 1000);
+    } else {
+      setTimeout(nextTrial, 1000);
+    }
+  });
+}
+
+function endExperiment() {
+  document.getElementById("sentence").innerHTML = "실험이 종료되었습니다!";
+  document.getElementById("options").style.display = "none";
+  document.getElementById("downloadBtn").style.display = "inline";
+}
+
+function downloadCSV() {
+  const header = ["word", "biasMeaning", "sentence", "left_word", "right_word", "correct_word", "chosen_word", "correct", "readingTime", "RT"];
+  const rows = results.map(r => [
+    r.word, r.biasMeaning, r.sentence, r.left_word, r.right_word,
+    r.correct_word, r.chosen_word, r.correct, r.readingTime, r.RT
+  ]);
+  const csvContent = [header, ...rows].map(r => r.join(",")).join("\n");
+
+  // BOM 추가
+  const bom = "\uFEFF";
+  const blob = new Blob([bom + csvContent], { type: "text/csv;charset=utf-8;" });
+
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `context_selection_${participant}.csv`;
+  link.click();
+}
+</script>
+</body>
+</html>

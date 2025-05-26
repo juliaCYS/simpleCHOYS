@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>어휘판단과제(Lexical Decision Task)</title>
+  <style>
+    body {
+      font-family: "Noto Sans KR", "Segoe UI", sans-serif;
+      background: #f4f6f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+    }
+    #experiment {
+      background: #ffffff;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      width: 800px;
+      height: 600px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    #fixation, #prime, #target {
+      font-size: 48px;
+      margin: 20px 0;
+      height: 80px;
+    }
+    #feedback {
+      font-size: 28px;
+      margin-top: 20px;
+      height: 40px;
+      font-weight: bold;
+    }
+    #progress {
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+    input, button {
+      font-size: 18px;
+      padding: 10px 20px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="experiment">
+    <div id="progress" style="display: none;"></div>
+
+    <div id="inputName">
+      <h2>이름을 입력하세요</h2>
+      <input type="text" id="participantName" />
+      <button id="startBtn">Start</button>
+      <p>
+        <strong><u>※ 반드시 실명을 입력해주세요.</strong></u>
+      </p>
+    </div>
+
+    <div id="instructions" style="display: none;">
+      <p>
+        본 실험은 <strong>어휘판단과제 (Lexical Decision Task)</strong>입니다.<br><br> 
+
+        📝 진행 방법<br><br>
+
+        1. 실험은 영어로 진행됩니다.<br>
+        2. 첫 번째 단어가 잠깐 나타난 뒤, 뒤이어 두 번째 단어가 나타납니다.<br> 
+        3. <strong><u>두 번째 단어</strong></u>를 보고, <strong><u>실제 영어 단어인지 아닌지</strong></u> 판단해 주세요.<br><br>
+
+        ⌨ 판단 방법<br><br> 
+
+        ✅ <strong>단어</strong>인 경우: <strong>←</strong> 키를 눌러주세요.<br>
+        예시: building, insecurity <br><br> 
+
+        ❌ 단어가 아닌 <strong>비단어</strong>인 경우: <strong>→</strong>키를 눌러주세요.<br>
+        <strong><u>(비단어: 철자나 형태는 단어처럼 보이지만, 실제 영어에는 없는 단어입니다.)</strong></u><br>
+        예시: grush, vlim <br><br><br>  
+
+         
+
+        가능한 한 빠르고 정확하게 판단해 주세요.<br><br>  
+
+        🧪 지금부터 연습 시행을 시작하겠습니다. <strong>스페이스바 또는 엔터</strong>를 누르세요.
+      </p> 
+    </div>
+
+    <div id="transition" style="display: none;">
+      <p>
+        연습 시행이 종료되었습니다.<br />
+        본 시행은 피드백 없이 진행됩니다.<br />
+        <strong>스페이스바 또는 엔터</strong>를 눌러 본 시행을 시작해 주세요.
+      </p>
+    </div>
+
+    <div id="fixation" style="display: none;">+</div>
+    <div id="prime" style="display: none;"></div>
+    <div id="target" style="display: none;"></div>
+    <div id="feedback"></div>
+    <button id="downloadBtn" style="display: none;" onclick="downloadCSV()">결과 다운로드</button>
+  </div>
+
+  <script>
+    const practicePairs = [
+      ["happy", "joyful", "word"],
+      ["apple", "giraffe", "word"], 
+      ["mandatory", "nueserous", "nonword"] 
+    ];
+
+    const word = [
+      ["persuade", "convince"], ["digress", "ramble"], ["reclusive", "isolated"], ["audit", "inspect"], 
+      ["assert", "declare"], ["arduous", "difficult"], ["migrate", "relocate"], ["proficient", "skilled"], 
+      ["coerce", "force"], ["obscure", "unclear"], ["assess", "evaluate"], ["manipulate", "control"], 
+      ["scrutinize", "examine"], ["benevolent", "kind"], ["lucid", "clear"], ["elusive", "evasive"], 
+      ["candid", "honest"], ["subtle", "faint"], ["meticulous", "precise"], ["tenuous", "weak"],
+
+      ["fabricate", "mourn"], ["stray", "assemble"], ["meander", "prove"], ["ardent", "fleeting"],
+      ["revere", "propagate"], ["invigorating", "wealthy"], ["abolish", "infer"], ["fragrant", "tolerant"],
+      ["voluble", "strong"], ["vanquish", "contemplate"], ["enthusiastic", "delicate"], ["serene", "weaken"],
+      ["expound", "aggravate"], ["proclaim", "cancel"], ["reticent", "latent"], ["animated", "boring"],
+      ["supple", "strict"], ["sluggish", "alert"], ["resilient", "cloudy"], ["outline", "command"]
+    ];
+
+    const nonword = [ 
+      ["glorp", "snarb"], ["bliff", "trindlef"], ["sproke", "drint"], ["plim", "zarn"], 
+      ["nobbit", "crudge"], ["wext", "framblek"], ["jund", "slarm"], ["vort", "klemish"], 
+      ["thindle", "brall"], ["grush", "zapplem"], ["mibber", "flonep"], ["drask", "quemp"], 
+      ["zindle", "brosten"], ["cloff", "tragel"], ["wugnet", "snarp"], ["plone", "glenth"], 
+      ["skerm", "drelp"], ["frib", "twollen"], ["narmit", "blusk"], ["vlim", "cradge"], 
+      ["snarpel", "grobbit"], ["flanter", "drindle"], ["plancher", "skorpin"], ["miblon", "quarsh"], 
+      ["zemtal", "vrobish"], ["chindle", "grapten"], ["splarn", "wibret"], ["klember", "droven"], 
+      ["brundal", "shorpin"], ["glanter", "snuvik"], ["frindlef", "tworven"], ["zarneth", "clombin"], 
+      ["brillex", "grosten"], ["grappel", "frundel"], ["twindle", "glurben"], ["plorven", "smatchel"], 
+      ["drimsel", "florbit"], ["quindle", "spraven"], ["snorbit", "grotel"], ["blarnet", "churbel"]
+    ];
+
+    const practiceTrials = practicePairs.map(([prime, target, condition]) => ({ prime, target, condition }));
+    const wordPairs = word.map(([prime, target]) => ({ prime, target, condition: "word" }));
+    const nonwordPairs = nonword.map(([prime, target]) => ({ prime, target, condition: "nonword" }));
+
+    let trials = shuffle([...wordPairs, ...nonwordPairs]);
+    let participant = "";
+    let currentIndex = 0;
+    let isPractice = true;
+    let results = [];
+
+    document.getElementById("startBtn").addEventListener("click", handleStart);
+    document.getElementById("participantName").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") handleStart();
+    });
+
+    function handleStart() {
+      const name = document.getElementById("participantName").value.trim();
+      if (!name) {
+        alert("이름을 입력하세요.");
+        return;
+      }
+      participant = name;
+      document.getElementById("inputName").style.display = "none";
+      document.getElementById("instructions").style.display = "block";
+      setTimeout(() => {
+        document.addEventListener("keydown", handleSpaceToStartPractice);
+      }, 300);
+    }
+
+    function handleSpaceToStartPractice(e) {
+      if (e.code === "Space" || e.code === "Enter") {
+        document.removeEventListener("keydown", handleSpaceToStartPractice);
+        document.getElementById("instructions").style.display = "none";
+        trials = [...practiceTrials];
+        currentIndex = 0;
+        isPractice = true;
+        startTrial();
+      }
+    }
+
+    function handleSpaceToStartMain(e) {
+      if (e.code === "Space" || e.code === "Enter") {
+        document.removeEventListener("keydown", handleSpaceToStartMain);
+        document.getElementById("transition").style.display = "none";
+        trials = shuffle([...wordPairs, ...nonwordPairs]);
+        currentIndex = 0;
+        isPractice = false;
+        document.getElementById("progress").style.display = "block";
+        startTrial();
+      }
+    }
+
+    function startTrial() {
+      if (currentIndex >= trials.length) {
+        if (isPractice) {
+          document.getElementById("transition").style.display = "block";
+          setTimeout(() => {
+            document.addEventListener("keydown", handleSpaceToStartMain);
+          }, 300);
+        } else {
+          endExperiment();
+        }
+        return;
+      }
+
+      updateProgress();
+
+      const trial = trials[currentIndex];
+      showElement("fixation", "+", 500, () => {
+        showElement("prime", trial.prime, 400, () => {
+          setTimeout(() => {
+            showTarget(trial);
+          }, 150);
+        });
+      });
+    }
+
+    function showElement(id, content, duration, callback) {
+      const el = document.getElementById(id);
+      el.textContent = content;
+      el.style.display = "block";
+      setTimeout(() => {
+        el.style.display = "none";
+        if (callback) callback();
+      }, duration);
+    }
+
+    function showTarget(trial) {
+      const target = document.getElementById("target");
+      const feedback = document.getElementById("feedback");
+      feedback.textContent = "";
+      target.textContent = trial.target;
+      target.style.display = "block";
+
+      const startTime = performance.now();
+      document.addEventListener("keydown", function handler(e) {
+        if (e.code !== "ArrowLeft" && e.code !== "ArrowRight") return;
+        document.removeEventListener("keydown", handler);
+        target.style.display = "none";
+
+        const response = (e.code === "ArrowLeft") ? "word" : "nonword";
+        const correctness = (trial.condition === "word" && e.code === "ArrowLeft") ||
+                            (trial.condition === "nonword" && e.code === "ArrowRight");
+
+        if (!isPractice) {
+          results.push({
+            prime: trial.prime,
+            target: trial.target,
+            condition: trial.condition,
+            response,
+            correctness,
+            RT: (performance.now() - startTime) / 1000
+          });
+        }
+
+        if (isPractice) {
+          feedback.textContent = correctness ? "정답!" : "오답!";
+          feedback.style.color = correctness ? "green" : "red";
+          setTimeout(() => {
+            feedback.textContent = "";
+            currentIndex++;
+            startTrial();
+          }, 1000);
+        } else {
+          currentIndex++;
+          startTrial();
+        }
+      });
+    }
+
+    function updateProgress() {
+      const completed = results.length;
+      document.getElementById("progress").textContent = `진행도: ${completed + 1}/${trials.length}`;
+    }
+
+    function endExperiment() {
+      document.getElementById("target").textContent = "실험 종료!";
+      document.getElementById("feedback").textContent = "";
+      document.getElementById("downloadBtn").style.display = "inline";
+    }
+
+    function downloadCSV() {
+      const header = ["prime", "target", "condition", "response", "correctness", "RT"];
+      const rows = results.map(r => [r.prime, r.target, r.condition, r.response, r.correctness, r.RT]);
+      const csv = [header, ...rows].map(r => r.join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `lexical_decision_2_${participant}.csv`;
+      link.click();
+    }
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+  </script>
+</body>
+</html>
